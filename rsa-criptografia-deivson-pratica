@@ -1,0 +1,54 @@
+# Script para demonstração do Algoritmo RSA (Atividade Prática)
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+import base64 
+
+# 1. Geração de Chaves (Gera p, q, n, phi(n), e, d internamente)
+private_key = rsa.generate_private_key(
+    public_exponent=65537, # e (Chave Pública)
+    key_size=2048 # Tamanho da chave
+)
+public_key = private_key.public_key()
+
+# Exibe parte da Chave Pública
+public_pem = public_key.public_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo
+)
+
+print("--- 1. GERAÇÃO DE CHAVES RSA (2048 bits) ---")
+print("Chave Pública (Início do PEM):\n" + public_pem.decode()[:100] + "...")
+
+# 2. Mensagem Original
+message = b"Criptografia Assimetrica RSA e muito legal!" 
+print("\n--- 2. MENSAGEM ORIGINAL ---")
+print("Mensagem de Alice para Bob:", message.decode())
+
+# 3. Criptografia (Alice usa a Chave Pública)
+ciphertext = public_key.encrypt(
+    message,
+    padding.OAEP(
+        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        algorithm=hashes.SHA256(),
+        label=None
+    )
+)
+
+cipher_base64 = base64.b64encode(ciphertext)
+print("\n--- 3. CRIPTOGRAFIA ---")
+print("Mensagem Criptografada (Cipher Text - Base64):", cipher_base64[:60].decode(), "...") 
+
+# 4. Descriptografia (Bob usa sua Chave Privada)
+plaintext = private_key.decrypt(
+    ciphertext,
+    padding.OAEP(
+        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        algorithm=hashes.SHA256(),
+        label=None
+    )
+)
+
+print("\n--- 4. DESCRIPTOGRAFIA ---")
+print("Mensagem Decifrada:", plaintext.decode())
